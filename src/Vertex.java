@@ -1,4 +1,4 @@
-public record Vertex(String name) {
+public record Vertex(String name) implements Comparable<Vertex> {
     @Override
     public int hashCode() {
         return name.hashCode();
@@ -12,5 +12,10 @@ public record Vertex(String name) {
     @Override
     public String toString() {
         return name;
+    }
+
+    @Override
+    public int compareTo(Vertex other) {
+        return name.compareTo(other.name);
     }
 }

@@ -7,6 +7,8 @@ public interface IGraph {
 
     int edgeCount();
 
+    boolean hasVertex(Vertex vertex);
+    
     boolean hasEdge(Vertex src, Vertex dest);
 
     int inboundDegree(Vertex src);
@@ -17,5 +19,4 @@ public interface IGraph {
 
     Collection<Vertex> outboundNeighbors(Vertex src);
 
-    boolean hasVertex(Vertex vertex);
 }
