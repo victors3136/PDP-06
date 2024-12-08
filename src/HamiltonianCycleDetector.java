@@ -19,11 +19,20 @@ public class HamiltonianCycleDetector {
     }
 
     public boolean detect() {
+        final var result = dfs(origin, new HashSet<>());
+        executor.shutdown();
         try {
-            return dfs(origin, new HashSet<>());
+            if (!executor.awaitTermination(30, TimeUnit.SECONDS)) {
+                System.err.println("Encountered some trouble when awaiting executor termination");
+            }
+        } catch (InterruptedException e) {
+            System.err.println("Encountered some trouble when trying to shut down the executor " + e.getMessage());
         } finally {
-            executor.shutdown();
+            if (!executor.isTerminated()) {
+                executor.shutdownNow();
+            }
         }
+        return result;
     }
 
     private boolean dfs(Vertex source, Set<Vertex> visited) {
