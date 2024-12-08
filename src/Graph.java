@@ -2,25 +2,28 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class Graph implements IGraph {
-    private final Map<Vertex, Collection<Vertex>> inbound;
-    private final Map<Vertex, Collection<Vertex>> outbound;
+    private final HashMap<Vertex, HashSet<Vertex>> inbound;
+    private final HashMap<Vertex, HashSet<Vertex>> outbound;
 
-    private Graph(Map<Vertex, Collection<Vertex>> inbound,
-                  Map<Vertex, Collection<Vertex>> outbound) {
-        this.inbound = inbound.entrySet().stream().map(entry -> Map.entry(
-                entry.getKey(),
-                new HashSet<>(entry.getValue())
-        )).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        this.outbound = outbound.entrySet().stream().map(entry -> Map.entry(
-                entry.getKey(),
-                new HashSet<>(entry.getValue())
-        )).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    private static HashMap<Vertex, HashSet<Vertex>> format(Map<Vertex, Set<Vertex>> input) {
+        return (HashMap<Vertex, HashSet<Vertex>>) input.entrySet().stream()
+                .map(entry ->
+                        Map.entry(
+                                entry.getKey(),
+                                new HashSet<>(entry.getValue())))
+                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+    }
+
+    private Graph(Map<Vertex, Set<Vertex>> inbound, Map<Vertex, Set<Vertex>> outbound) {
+        this.inbound = format(inbound);
+        this.outbound = format(outbound);
     }
 
     public static Graph fromFile(String path) {
@@ -31,8 +34,8 @@ public class Graph implements IGraph {
             throw new RuntimeException("Could not open file " + path);
         }
         final int vertexCount = parseAndRemoveVertexCountLine(lines);
-        final var inbound = new ConcurrentHashMap<Vertex, Collection<Vertex>>();
-        final var outbound = new ConcurrentHashMap<Vertex, Collection<Vertex>>();
+        final var inbound = new ConcurrentHashMap<Vertex, Set<Vertex>>();
+        final var outbound = new ConcurrentHashMap<Vertex, Set<Vertex>>();
         IntStream.range(0, vertexCount).parallel().forEach(id -> {
             inbound.put(new Vertex(String.valueOf(id)), new ConcurrentSkipListSet<>());
             outbound.put(new Vertex(String.valueOf(id)), new ConcurrentSkipListSet<>());
@@ -116,11 +119,6 @@ public class Graph implements IGraph {
 
     @Override
     public String toString() {
-        return outbound.entrySet().stream().map(
-                        kvp ->
-                                kvp.getKey().toString() + " -> ["
-                                        + kvp.getValue().stream().map(Vertex::toString)
-                                        .reduce((lhs, rhs) -> lhs + ", " + rhs).orElse("") + "]")
-                .reduce((lhs, rhs) -> lhs + "\n" + rhs).orElse("");
+        return outbound.entrySet().stream().map(kvp -> kvp.getKey().toString() + " -> [" + kvp.getValue().stream().map(Vertex::toString).reduce((lhs, rhs) -> lhs + ", " + rhs).orElse("") + "]").reduce((lhs, rhs) -> lhs + "\n" + rhs).orElse("");
     }
 }
